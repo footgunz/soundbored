@@ -1,0 +1,128 @@
+# soundbored in the host simulator. The @-lines are protocol frames, expanded by tools/sbtool.py: run tests/run.sh
+wait 600
+expect sounds 0
+expect free 94
+shot empty.png
+# a damaged frame is answered "bad frame"; HELLO is answered
+@bad
+@cmd HELLO
+# an upload: 0.4 s at 16 kHz is 3200 bytes, the icon 1184 more: 2 sectors. key=auto gives slot 0 key 0
+@upload name=BEEP freq=440 ms=400
+expect sounds 1
+expect free 92
+expect used0 1
+expect key0 0
+expect upload 0
+# its key plays it, and it ends by itself
+key 0 down
+wait 20
+expect voices 1
+wav beep.wav
+wait 300
+wavstop
+expect peak_db_min -30
+key 0 up
+wait 300
+expect voices 0
+# a longer one (3 s: 25184 bytes, 7 sectors) on key 5; MIDI note 58 (53 + 5) plays it, PLAY 255 stops everything
+@upload name=NOISE wave=noise ms=3000 key=5
+expect sounds 2
+expect free 85
+expect key5 1
+midi 90 3A 64
+wait 20
+expect voices 1
+midi 80 3A 00
+@cmd PLAY 255
+wait 20
+expect voices 0
+# the directory survives a restart
+reboot
+wait 600
+expect sounds 2
+expect free 85
+expect key5 1
+shot two.png
+# gate: it stops when the key is let go
+@cmd SET_META 1 5 1 256 NOISE
+key 5 down
+wait 50
+expect voices 1
+key 5 up
+wait 50
+expect voices 0
+# loop: a press starts it, it plays on past its end, the next press stops it
+@cmd SET_META 0 0 2 256 BEEP
+key 0 down
+wait 30
+key 0 up
+wait 900
+expect voices 1
+key 0 down
+wait 30
+key 0 up
+wait 50
+expect voices 0
+# a key taken by another sound moves to it
+@cmd SET_META 1 0 0 256 NOISE
+expect key0 1
+expect key5 -1
+@cmd SET_META 0 0 0 256 BEEP
+expect key0 0
+# SWAP moves a sound in the grid (to page 2), its key with it
+@cmd SWAP 0 13
+expect used0 0
+expect used13 1
+expect key0 13
+# a new icon: one sector copied, one freed
+@icon slot=13
+expect free 85
+key 0 down
+wait 20
+expect voices 1
+key 0 up
+wait 400
+# a retry gets the same answer and writes nothing twice; ABORT leaves nothing behind
+@upload name=CUT ms=1000 stop=2
+expect upload 1
+@again
+@cmd ABORT
+expect upload 0
+expect sounds 2
+expect free 85
+# a wrong CRC: nothing kept
+@upload name=BAD ms=300 badcrc=1
+expect sounds 2
+expect free 85
+# too long for what is free: refused at BEGIN
+@upload name=HUGE ms=60000 expect=4
+expect free 85
+# out of range, empty slots
+@cmd DELETE 0 expect=3
+@cmd GET_ENTRY 60 expect=3
+@cmd PLAY 7 expect=3
+# replacing a used slot frees its old sectors at the commit
+@upload name=BEEP2 ms=400 slot=13 key=0
+expect sounds 2
+expect free 85
+# the cursor's page follows the commit; OCT+ / OCT- page
+expect page 1
+shot page2.png
+tap OCT+
+wait 30
+expect page 2
+tap OCT-
+tap OCT-
+wait 30
+expect page 0
+# delete
+@cmd DELETE 13
+expect sounds 1
+expect free 87
+# FORMAT, with its word
+@cmd FORMAT
+expect sounds 0
+expect free 94
+reboot
+wait 600
+expect sounds 0

@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# soundbored's words for a screen reader (fm1-reader): the text on the screen <TAB> what to say.
+# url: https://charlesvestal.github.io/fm1-base/words/
+# TODO: point at soundbored's own site once it is published
+SOUNDBORED	sound board
+BLE	bluetooth
+FREE	free
+RECEIVING	receiving

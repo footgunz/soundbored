@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "soundbrd",
+  "name": "soundbored",
+  "license": "MPL-2.0",
+  "tagline": "a soundboard for the FM-1: upload sounds and icons from the browser",
+  "description": "Turns the FM-1 into a soundboard. A web page uploads short mono samples, each with a name and an icon, over USB MIDI. The keys play them, and the screen shows a grid of icons.",
+  "tags": ["utility"],
+  "install": "https://charlesvestal.github.io/fm1-base/install/",
+  "site": "https://charlesvestal.github.io/fm1-base/",
+  "source": "https://github.com/charlesvestal/fm1-base",
+  "screenshot": "app/docs/img/screen-grid.png",
+  "hardware": {
+    "models": ["FM-1"],
+    "flash": ["856014", "B36014"],
+    "features": ["bluetooth-midi", "usb-audio-in", "usb-audio-out", "velocity", "pressure", "screen-reader"]
+  },
+  "credits": "Built on fm1-base by Charles Vestal and felucca-bsp."
+}

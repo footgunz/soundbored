@@ -1,0 +1,7 @@
+.venv/
+app/build/
+web/node_modules/
+web/dist/
+__pycache__/
+app/web/
+HANDOFF.md

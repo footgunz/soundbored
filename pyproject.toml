@@ -1,0 +1,14 @@
+[project]
+name = "soundbored"
+version = "0.0.0"
+description = "Soundboard firmware for the M-VAVE FM-1 (fm1-base) and its web uploader"
+requires-python = ">=3.12"
+dependencies = [
+    "Pillow",
+    "fonttools",
+    "pyusb",
+    "libusb-package",
+]
+
+[tool.uv]
+package = false

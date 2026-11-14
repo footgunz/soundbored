@@ -1,0 +1,26 @@
+# The manual's screenshots (app/docs/img): app/tests/run.sh expands this too (tools/sbtool.py)
+wait 600
+@upload name=KICK freq=60 ms=300 seed=1
+@upload name=SNARE wave=noise ms=250 seed=2
+@upload name=AIRHORN wave=square freq=330 ms=900 seed=3
+@upload name=APPLAUSE wave=noise ms=1500 seed=4
+@upload name=RIMSHOT freq=900 ms=150 seed=5
+@upload name=SAD_TROMBONE freq=220 ms=1200 seed=6
+@upload name=CRICKETS freq=4000 ms=800 seed=7
+@upload name=BOING freq=180 ms=500 seed=8
+@upload name=DING freq=1200 ms=700 seed=9
+@upload name=WHOOSH wave=noise ms=600 seed=10
+@upload name=LASER wave=square freq=880 ms=300 seed=11
+@upload name=GONG freq=110 ms=2000 seed=12
+wait 1600
+turn SELECT -11
+wait 1600
+shot screen-grid.png
+@cmd SET_META 3 3 2 256 APPLAUSE
+key 3 down
+key 11 down
+wait 30
+key 3 up
+key 11 up
+wait 100
+shot screen-playing.png

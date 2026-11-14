@@ -1,0 +1,21 @@
+# The template's build settings (tools/build.py)
+name = "SOUNDBRD"              # APP_NAME is in app.h; this names the build's files
+id_prefix = "FM-1_42"          # package identity: dev FM-1_4200, releases FM-1_42XXYYZZ
+usb_manufacturer = "soundbored"
+usb_product = "SOUNDBORED FM-1"
+o2 = []                        # separate units compiled at -O2 (an app's DSP)
+words = "words.tsv"
+ble = true                     # Bluetooth MIDI (--no-ble builds without it)
+ble_central = false            # (the template scanned for Bluetooth MIDI devices; a soundboard does not)
+# the site (tools/make_site.py, tools/publish_site.sh)
+tagline = "a soundboard for the FM-1: upload sounds and icons from the browser"
+repo = "https://github.com/charlesvestal/fm1-base"
+licence = "MPL-2.0"
+credits = "Built on fm1-base by Charles Vestal and felucca-bsp."                   # a sentence for the installer's footer: what your firmware is built from
+# firmware.json, for firmware hubs (docs/FIRMWARE-JSON.md): the build writes it from these and the keys above
+author = ""                    # TODO
+description = "Turns the FM-1 into a soundboard. A web page uploads short mono samples, each with a name and an icon, over USB MIDI. The keys play them, and the screen shows a grid of icons."
+tags = ["utility"]
+install = "https://charlesvestal.github.io/fm1-base/install/"   # the page that installs it
+site = "https://charlesvestal.github.io/fm1-base/"
+screenshot = "app/docs/img/screen-grid.png"   # for the hubs' cards: a square PNG, at least 240 x 240, in your repository
