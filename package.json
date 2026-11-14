@@ -1,0 +1,15 @@
+{
+  "name": "soundbored",
+  "private": true,
+  "description": "Runs the web uploader in web/ from the repo root",
+  "scripts": {
+    "setup": "npm --prefix web install",
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "preview": "npm --prefix web run preview",
+    "check": "npm --prefix web run check",
+    "test": "npm --prefix web test",
+    "test:fw": "app/tests/run.sh",
+    "xcheck": "tools/xcheck.sh"
+  }
+}

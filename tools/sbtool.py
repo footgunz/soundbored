@@ -2,6 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 """soundbored's protocol (docs/protocol.md) from Python: frames, IMA ADPCM, icons.
 
+    sbtool.py encode IN.wav OUT.adpcm     a PCM WAV (8/16/24/32-bit, any rate 4000..44100, stereo is mixed down)
+                                          into the device's audio format; prints rate and frames
+    sbtool.py decode IN.adpcm RATE OUT.wav  back into a 16-bit mono WAV, to listen to what the device will play
+    sbtool.py icon IN.png OUT.icon        any image Pillow reads into the 1184-byte icon (cropped to a square,
+                                          48x48, 16 colours)
+    sbtool.py unicon IN.icon OUT.png      an icon back into a PNG
+    sbtool.py selftest
+
     sbtool.py expand IN OUT      a host-simulator script with @-directives into a plain one (the frames as
                                  "sysex" lines); the directives:
 
@@ -221,6 +229,65 @@ def expand(src: str, dst: str):
         f.write("\n".join(ex.out) + "\n")
 
 
+def read_wav(path: str):
+    import wave
+    with wave.open(path, "rb") as w:
+        ch, width, rate, n = w.getnchannels(), w.getsampwidth(), w.getframerate(), w.getnframes()
+        raw = w.readframes(n)
+    if not 4000 <= rate <= 44100:
+        raise SystemExit(f"{path}: {rate} Hz; the device takes 4000..44100 (resample it first)")
+    out = []
+    step = width * ch
+    for i in range(0, n * step, step):
+        acc = 0
+        for c in range(ch):
+            b = raw[i + c * width:i + (c + 1) * width]
+            v = b[0] - 128 if width == 1 else int.from_bytes(b, "little", signed=True)
+            acc += v << 8 if width == 1 else v >> 8 * (width - 2)
+        out.append(max(-32768, min(32767, acc // ch)))
+    return rate, out
+
+
+def write_wav(path: str, rate: int, samples):
+    import wave
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", s) for s in samples))
+
+
+def image_to_icon(path: str) -> bytes:
+    from PIL import Image, ImageOps
+    img = Image.open(path)
+    img = img.convert("RGBA")
+    bg = Image.new("RGBA", img.size, (0, 0, 0, 255))
+    img = Image.alpha_composite(bg, img).convert("RGB")
+    img = ImageOps.fit(img, (ICON_W, ICON_W), Image.LANCZOS)
+    q = img.quantize(16, method=Image.Quantize.MEDIANCUT)
+    pal = (q.getpalette() or [])[:48]
+    pal += [0] * (48 - len(pal))
+    px = q.tobytes()  # mode P: one palette index a pixel
+    body = b"".join(struct.pack("<H", rgb565(*pal[i:i + 3])) for i in range(0, 48, 3))
+    body += bytes(px[i] << 4 | px[i + 1] for i in range(0, len(px), 2))
+    assert len(body) == ICON_BYTES
+    return body
+
+
+def icon_to_image(data: bytes):
+    from PIL import Image
+    if len(data) != ICON_BYTES:
+        raise SystemExit(f"an icon is {ICON_BYTES} bytes, not {len(data)}")
+    pal = []
+    for i in range(16):
+        c = struct.unpack_from("<H", data, 2 * i)[0]
+        r, g, b = c >> 11, c >> 5 & 63, c & 31
+        pal.append((r << 3 | r >> 2, g << 2 | g >> 4, b << 3 | b >> 2))
+    img = Image.new("RGB", (ICON_W, ICON_W))
+    img.putdata([pal[b >> 4 if k == 0 else b & 15] for b in data[32:] for k in (0, 1)])
+    return img
+
+
 def selftest():
     assert pack7(bytes([0x80, 0x01])) == bytes([0x01, 0x00, 0x01])
     assert zlib.crc32(b"123456789") == 0xCBF43926
@@ -236,6 +303,19 @@ def selftest():
 if __name__ == "__main__":
     if len(sys.argv) == 4 and sys.argv[1] == "expand":
         expand(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 4 and sys.argv[1] == "encode":
+        rate, pcm = read_wav(sys.argv[2])
+        with open(sys.argv[3], "wb") as f:
+            f.write(ima_encode(pcm))
+        print(f"rate={rate} frames={len(pcm)} audio_bytes={(len(pcm) + 1) // 2} ({len(pcm) / rate:.2f} s)")
+    elif len(sys.argv) == 5 and sys.argv[1] == "decode":
+        data = open(sys.argv[2], "rb").read()
+        write_wav(sys.argv[4], int(sys.argv[3]), ima_decode(data, len(data) * 2))
+    elif len(sys.argv) == 4 and sys.argv[1] == "icon":
+        with open(sys.argv[3], "wb") as f:
+            f.write(image_to_icon(sys.argv[2]))
+    elif len(sys.argv) == 4 and sys.argv[1] == "unicon":
+        icon_to_image(open(sys.argv[2], "rb").read()).save(sys.argv[3])
     elif len(sys.argv) == 2 and sys.argv[1] == "selftest":
         selftest()
     else:
